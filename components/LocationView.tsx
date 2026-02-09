@@ -242,6 +242,7 @@ const LocationView: React.FC<LocationViewProps> = ({
                             onSave={saveEditing}
                             onValueChange={(val) => setTempValue(val)}
                             onKeyDown={handleKeyDown}
+                            inputType="date"
                         />
                         <EditableRow 
                             fieldKey="prodDate"
@@ -253,6 +254,7 @@ const LocationView: React.FC<LocationViewProps> = ({
                             onSave={saveEditing}
                             onValueChange={(val) => setTempValue(val)}
                             onKeyDown={handleKeyDown}
+                            inputType="date"
                         />
                         <InfoRow label="Người Nhập" value={foundItem.importer} />
                         <InfoRow label="Cập nhật cuối" value={formatDateTime(foundItem.updatedAt)} />

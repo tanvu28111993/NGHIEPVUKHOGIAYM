@@ -42,18 +42,58 @@ interface EditableRowProps {
     onSave: () => void;
     onValueChange: (val: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    inputType?: 'text' | 'date';
 }
 
 export const EditableRow: React.FC<EditableRowProps> = ({ 
-    fieldKey, label, value, isEditingThis, tempValue, onStartEditing, onSave, onValueChange, onKeyDown 
+    fieldKey, label, value, isEditingThis, tempValue, onStartEditing, onSave, onValueChange, onKeyDown,
+    inputType = 'text'
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isEditingThis && inputRef.current) {
             inputRef.current.focus();
+            if (inputType === 'text') {
+                 // Only select text for text inputs, date inputs handle selection differently
+                 // setTimeout(() => inputRef.current?.select(), 50); 
+            } else if (inputType === 'date') {
+                 // For date inputs, we might want to trigger the picker immediately (browser dependent)
+                 try {
+                     // @ts-ignore
+                     if(inputRef.current.showPicker) inputRef.current.showPicker();
+                 } catch(e) {}
+            }
         }
-    }, [isEditingThis]);
+    }, [isEditingThis, inputType]);
+
+    // Convert DD/MM/YYYY to YYYY-MM-DD for input[type="date"]
+    const dateInputValue = React.useMemo(() => {
+        if (inputType !== 'date' || !tempValue) return '';
+        const strVal = String(tempValue).split(' ')[0]; // Strip time if present in temp
+        const parts = strVal.split('/');
+        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        return '';
+    }, [tempValue, inputType]);
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const yyyymmdd = e.target.value;
+        if (!yyyymmdd) {
+            onValueChange('');
+            return;
+        }
+        const [y, m, d] = yyyymmdd.split('-');
+        onValueChange(`${d}/${m}/${y}`);
+    };
+
+    // Strip time for display (DD/MM/YYYY HH:mm -> DD/MM/YYYY)
+    const displayValue = React.useMemo(() => {
+        if (!value) return '-';
+        if (inputType === 'date') {
+            return String(value).split(' ')[0];
+        }
+        return value;
+    }, [value, inputType]);
 
     return (
         <div 
@@ -71,19 +111,32 @@ export const EditableRow: React.FC<EditableRowProps> = ({
             
             <div className="flex-1 text-right relative">
                 {isEditingThis ? (
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={tempValue}
-                        onChange={(e) => onValueChange(e.target.value)}
-                        onBlur={onSave}
-                        onKeyDown={onKeyDown}
-                        className="w-full bg-transparent text-right outline-none p-0 m-0 text-white font-bold text-[14px] caret-[#FF8C00] font-mono"
-                        placeholder="DD/MM/YYYY"
-                    />
+                    inputType === 'date' ? (
+                        <input
+                            ref={inputRef}
+                            type="date"
+                            value={dateInputValue}
+                            onChange={handleDateChange}
+                            onBlur={onSave}
+                            onKeyDown={onKeyDown}
+                            className="w-full bg-transparent text-right outline-none p-0 m-0 text-white font-bold text-[14px] caret-[#FF8C00] font-mono color-scheme-dark"
+                            style={{ colorScheme: 'dark' }} 
+                        />
+                    ) : (
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={tempValue}
+                            onChange={(e) => onValueChange(e.target.value)}
+                            onBlur={onSave}
+                            onKeyDown={onKeyDown}
+                            className="w-full bg-transparent text-right outline-none p-0 m-0 text-white font-bold text-[14px] caret-[#FF8C00] font-mono"
+                            placeholder="Nhập giá trị..."
+                        />
+                    )
                 ) : (
                     <span className="font-medium text-[14px] text-gray-200 leading-snug">
-                        {value || '-'}
+                        {displayValue}
                     </span>
                 )}
             </div>

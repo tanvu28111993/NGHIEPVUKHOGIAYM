@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { PaperRoll } from '../types';
 import { formatVNNumber } from '../utils';
@@ -29,6 +30,66 @@ export const InfoRow: React.FC<InfoRowProps> = React.memo(({ label, value, copya
         </span>
     </div>
 ));
+
+// --- EditableRow (NEW) ---
+interface EditableRowProps {
+    fieldKey: keyof PaperRoll;
+    label: string;
+    value: string | number;
+    isEditingThis: boolean;
+    tempValue: string | number;
+    onStartEditing: (field: keyof PaperRoll, value: string | number, e?: React.MouseEvent) => void;
+    onSave: () => void;
+    onValueChange: (val: string) => void;
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+
+export const EditableRow: React.FC<EditableRowProps> = ({ 
+    fieldKey, label, value, isEditingThis, tempValue, onStartEditing, onSave, onValueChange, onKeyDown 
+}) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isEditingThis && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isEditingThis]);
+
+    return (
+        <div 
+            className={`flex justify-between items-center py-3.5 border-b border-white/5 last:border-0 group transition-colors ${!isEditingThis ? 'active:bg-white/5 cursor-pointer hover:bg-white/[0.02]' : 'bg-white/5'}`}
+            onClick={(e) => {
+                if (!isEditingThis) {
+                    onStartEditing(fieldKey, value, e);
+                }
+            }}
+        >
+            <span className="text-gray-500 text-[11px] font-bold uppercase tracking-wider flex items-center shrink-0 mr-3" style={{ color: isEditingThis ? EDIT_COLOR : undefined }}>
+                {label}
+                {!isEditingThis && <span className="material-symbols-outlined text-[14px] ml-1.5 opacity-50">edit</span>}
+            </span>
+            
+            <div className="flex-1 text-right relative">
+                {isEditingThis ? (
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={tempValue}
+                        onChange={(e) => onValueChange(e.target.value)}
+                        onBlur={onSave}
+                        onKeyDown={onKeyDown}
+                        className="w-full bg-transparent text-right outline-none p-0 m-0 text-white font-bold text-[14px] caret-[#FF8C00] font-mono"
+                        placeholder="DD/MM/YYYY"
+                    />
+                ) : (
+                    <span className="font-medium text-[14px] text-gray-200 leading-snug">
+                        {value || '-'}
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+};
 
 // --- CardBox ---
 interface CardBoxProps {

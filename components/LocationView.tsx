@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { PaperRoll } from '../types';
 import { formatDateTime } from '../utils';
-import { BigActionButton, CardBox, InfoRow, StatCard } from './SharedComponents';
+import { BigActionButton, CardBox, InfoRow, StatCard, EditableRow } from './SharedComponents';
 
 const EDIT_COLOR = '#FF8C00';
 
@@ -53,10 +54,13 @@ const LocationView: React.FC<LocationViewProps> = ({
         if (e) e.stopPropagation();
         setEditingField(field);
         let strVal = value === null || value === undefined ? '' : String(value);
-        const isIntField = ['quantity', 'gsm'].includes(field); 
-        if (!isIntField) {
+        
+        // Only replace dots with commas for specific decimal fields
+        const isDecimalField = ['weight', 'lengthCm', 'widthCm'].includes(field);
+        if (isDecimalField) {
             strVal = strVal.replace(/\./g, ',');
         }
+        
         setTempValue(strVal);
         if (navigator.vibrate) navigator.vibrate(10);
     };
@@ -228,8 +232,28 @@ const LocationView: React.FC<LocationViewProps> = ({
                     </CardBox>
 
                     <CardBox title="Thời gian & Nhân sự" icon="history">
-                        <InfoRow label="Ngày Nhập" value={foundItem.importDate} />
-                        <InfoRow label="Ngày SX" value={foundItem.prodDate} />
+                        <EditableRow 
+                            fieldKey="importDate"
+                            label="Ngày Nhập" 
+                            value={foundItem.importDate}
+                            isEditingThis={editingField === 'importDate'}
+                            tempValue={tempValue}
+                            onStartEditing={startEditing}
+                            onSave={saveEditing}
+                            onValueChange={(val) => setTempValue(val)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <EditableRow 
+                            fieldKey="prodDate"
+                            label="Ngày SX" 
+                            value={foundItem.prodDate}
+                            isEditingThis={editingField === 'prodDate'}
+                            tempValue={tempValue}
+                            onStartEditing={startEditing}
+                            onSave={saveEditing}
+                            onValueChange={(val) => setTempValue(val)}
+                            onKeyDown={handleKeyDown}
+                        />
                         <InfoRow label="Người Nhập" value={foundItem.importer} />
                         <InfoRow label="Cập nhật cuối" value={formatDateTime(foundItem.updatedAt)} />
                     </CardBox>
